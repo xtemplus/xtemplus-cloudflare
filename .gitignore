@@ -1,0 +1,25 @@
+# 依赖
+node_modules/
+
+# 凭据文件（不要提交到版本控制）
+credentials.json
+.env
+
+# 日志
+*.log
+npm-debug.log*
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 构建产物
+dist/
+build/
+
