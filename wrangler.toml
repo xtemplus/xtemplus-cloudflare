@@ -1,4 +1,13 @@
 name = "xtemplus-cloudflare"
-compatibility_date = "2025-11-09"
-main = "server.js"
+compatibility_date = "2024-11-09"
+main = "worker.js"
 compatibility_flags = ["nodejs_compat"]
+
+# 环境变量配置（建议使用 wrangler secret 命令设置，而不是直接写在配置文件中）
+# 使用命令: wrangler secret put ALIYUN_ACCESS_KEY_ID
+# 使用命令: wrangler secret put ALIYUN_ACCESS_KEY_SECRET
+# 使用命令: wrangler secret put ALIYUN_ACCOUNT_NAME
+[vars]
+# ALIYUN_ACCESS_KEY_ID = "your-access-key-id"
+# ALIYUN_ACCESS_KEY_SECRET = "your-access-key-secret"
+ALIYUN_ACCOUNT_NAME = "system@email.hupei.fun"

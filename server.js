@@ -1,97 +1,94 @@
-// server.js - Cloudflare Worker 版本
-import EmailService from './src/services/EmailService.js';
+const http = require('http');
+const url = require('url');
+const EmailService = require('./src/services/EmailService');
 
 // 创建邮件服务实例
 const emailService = new EmailService();
 
 /**
  * 发送响应
- * @param {Object} data 响应数据
+ * @param {Object} res HTTP 响应对象
  * @param {Number} statusCode 状态码
+ * @param {Object} data 响应数据
  */
-function createResponse(data, statusCode = 200) {
-  return new Response(JSON.stringify(data, null, 2), {
-    status: statusCode,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
+function sendResponse(res, statusCode, data) {
+  res.writeHead(statusCode, { 
+    'Content-Type': 'application/json; charset=utf-8',
+    'Access-Control-Allow-Origin': '*'
   });
+  res.end(JSON.stringify(data, null, 2));
 }
 
 /**
  * 处理邮件发送
- * @param {URL} url URL 对象
+ * @param {Object} req HTTP 请求对象
+ * @param {Object} res HTTP 响应对象
  */
-async function handleMailRequest(url) {
+async function handleMailRequest(req, res) {
   try {
-    // 获取查询参数
-    const params = url.searchParams;
-    
+    // 解析 URL 查询参数
+    const parsedUrl = url.parse(req.url, true);
+    const query = parsedUrl.query;
+
+    // 从查询参数或默认配置中获取邮件信息
     const emailData = {
-      toAddress: params.get('to') || 'ishupei@qq.com',
-      subject: params.get('subject') || '系统通知',
-      htmlBody: params.get('htmlBody') || params.get('body') || '<h1>这是一封自动发送的邮件</h1><p>您访问了 /mail 接口</p>',
-      textBody: params.get('textBody') || params.get('body') || '这是一封自动发送的邮件\n您访问了 /mail 接口',
-      fromAlias: params.get('fromAlias') || null,
+      toAddress: query.to || 'ishupei@qq.com',
+      subject: query.subject || '系统通知',
+      htmlBody: query.htmlBody || query.body || '<h1>这是一封自动发送的邮件</h1><p>您访问了 /mail 接口</p>',
+      textBody: query.textBody || query.body || '这是一封自动发送的邮件\n您访问了 /mail 接口',
+      fromAlias: query.fromAlias || null,
     };
 
     // 发送邮件
     const resp = await emailService.sendEmail(emailData);
 
-    console.log(`邮件发送成功: ${emailData.toAddress} - ${emailData.subject}`);
-
-    return createResponse({
+    // 返回成功响应
+    sendResponse(res, 200, {
       success: true,
       message: '邮件发送成功',
       data: resp
     });
 
+    console.log(`邮件发送成功: ${emailData.toAddress} - ${emailData.subject}`);
   } catch (error) {
-    console.error('邮件发送失败:', error);
-    
-    return createResponse({
+    // 返回错误响应
+    sendResponse(res, 500, {
       success: false,
       message: '邮件发送失败',
       error: error.message || error.toString()
-    }, 500);
+    });
+
+    console.error('邮件发送失败:', error);
   }
 }
 
 /**
- * 处理 OPTIONS 请求（CORS 预检）
+ * 处理其他请求
+ * @param {Object} res HTTP 响应对象
  */
-function handleOptionsRequest() {
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
-    }
-  });
+function handleOtherRequest(res) {
+  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+  res.end('hello');
 }
 
-// Cloudflare Worker 入口点
-export default {
-  async fetch(request, env, ctx) {
-    const url = new URL(request.url);
-    const pathname = url.pathname;
+// 创建 HTTP 服务器
+const server = http.createServer(async (req, res) => {
+  const parsedUrl = url.parse(req.url);
+  const pathname = parsedUrl.pathname;
 
-    // 处理 CORS 预检请求
-    if (request.method === 'OPTIONS') {
-      return handleOptionsRequest();
-    }
-
-    // 处理 /mail 路径
-    if (pathname === '/mail') {
-      return handleMailRequest(url);
-    }
-
+  // 处理 /mail 路径
+  if (pathname === '/mail') {
+    await handleMailRequest(req, res);
+  } else {
     // 其他路径返回 hello
-    return new Response('hello', {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-    });
+    handleOtherRequest(res);
   }
-};
+});
+
+const PORT = 3000;
+
+server.listen(PORT, () => {
+  console.log(`服务器运行在 http://localhost:${PORT}`);
+  console.log(`访问 http://localhost:${PORT}/mail 可自动发送邮件`);
+});
+

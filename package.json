@@ -2,22 +2,21 @@
   "name": "xtemplus-cloudflare",
   "version": "1.0.0",
   "description": "简单的 Node.js 服务器",
-  "type": "module",
-  "main": "server.js",
+  "main": "src/client.js",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "start": "node server.js",
+    "client": "node src/client.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@alicloud/tea-typescript": "^1.0.0",
+    "@alicloud/credentials": "^2.4.2",
     "@alicloud/openapi-client": "^0.4.15",
     "@alicloud/tea-console": "^1.0.0",
-    "@alicloud/tea-util": "^1.4.9",
-    "@alicloud/credentials": "^2.4.2"
+    "@alicloud/tea-typescript": "^1.0.0",
+    "@alicloud/tea-util": "^1.4.9"
   },
   "devDependencies": {
-    "wrangler": "^4.46.0"
+    "wrangler": "^4.47.0"
   }
 }
